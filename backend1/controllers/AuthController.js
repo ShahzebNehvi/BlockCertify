@@ -1,39 +1,53 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
 const User = require('../models/User');
+const sendResponse = require('../utils/sendResponse'); // Adjust if needed for your structure
 
 class AuthController {
   static async signUp(req, res) {
-    const { username, password } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return sendResponse(res, 400, 'Validation error', errors.array());
+    }
+
+    const { email, password } = req.body;
 
     try {
+      // Check if email is already in use
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return sendResponse(res, 400, 'Email already in use');
+      }
+
       const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = new User({ username, password: hashedPassword });
+      const newUser = new User({ email, password: hashedPassword });
       await newUser.save();
-      res.status(201).json({ message: 'User created successfully' });
+      sendResponse(res, 201, 'User created successfully');
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error(error);
+      sendResponse(res, 500, 'Internal Server Error');
     }
   }
 
   static async login(req, res) {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     try {
-      const user = await User.findOne({ username });
+      const user = await User.findOne({ email });
       if (!user) {
-        return res.status(400).json({ message: 'Invalid credentials' });
+        return sendResponse(res, 401, 'Invalid credentials');
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ message: 'Invalid credentials' });
+        return sendResponse(res, 401, 'Invalid credentials');
       }
 
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      res.json({ token });
+      // Generate and send JWT here (implement as needed)
+      sendResponse(res, 200, 'Login successful');
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error(error);
+      sendResponse(res, 500, 'Internal Server Error');
     }
   }
 }

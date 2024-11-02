@@ -9,7 +9,7 @@ function Navbar() {
   };
 
   return (
-    <nav className="w-full bg-[#060B0F] py-4">
+    <nav className="sticky top-0 w-full bg-[#060B0F] py-4 z-50">
       <div className="container mx-auto px-4 flex items-center">
         {/* Hamburger menu for mobile */}
         <div className="md:hidden">
