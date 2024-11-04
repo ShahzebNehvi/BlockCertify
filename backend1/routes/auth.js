@@ -46,4 +46,5 @@ router.post(
 // Login route
 router.post('/login', AuthController.login);
 
+
 module.exports = router;
